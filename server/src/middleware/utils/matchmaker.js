@@ -1,4 +1,4 @@
-const Volunteer = require('../models/Volunteer');
+const Volunteer = require('../../models/Volunteer');
 
 const findMatch = async (studentTags) => {
   try {
