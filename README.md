@@ -48,3 +48,19 @@ Run test files in `server/` folder:
 - Person 2: Auth + safety (JWT, trigger scanner, matchmaker)
 - Person 3: GitHub owner + frontend integration
 - Person 4: MongoDB Atlas setup + end-to-end testing
+
+## Prototype Status (v0.1)
+
+### Working ✅
+- Anonymous session with alias generation
+- 24-hour TTL auto-delete
+- Safe message flow
+- Flagged message warning
+- Emergency diversion with contacts
+- Volunteer login and availability toggle
+
+### Not in prototype ⏳
+- Warden/admin dashboard
+- Aggregation heatmap
+- Email notifications
+- Real-time socket chat (currently simulated)
