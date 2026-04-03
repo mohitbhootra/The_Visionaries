@@ -5,52 +5,99 @@
 
 @layer base {
   :root {
-    --background: 210 6% 12%;
-    --foreground: 210 20% 92%;
+    --background: 0 50% 99%;
+    --foreground: 0 0% 0.4%;
 
-    --card: 210 6% 15%;
-    --card-foreground: 210 20% 92%;
+    --card: 254 9% 95%;
+    --card-foreground: 0 0% 0.4%;
 
-    --popover: 210 6% 15%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 254 9% 95%;
+    --popover-foreground: 0 0% 0.4%;
 
-    --primary: 185 45% 45%;
-    --primary-foreground: 210 6% 10%;
+    --primary: 255 45% 48%;
+    --primary-foreground: 0 50% 99%;
 
-    --secondary: 210 8% 20%;
-    --secondary-foreground: 210 15% 78%;
+    --secondary: 254 9% 71%;
+    --secondary-foreground: 255 26% 26%;
 
-    --muted: 210 6% 18%;
-    --muted-foreground: 210 10% 52%;
+    --muted: 254 9% 92%;
+    --muted-foreground: 255 10% 36%;
 
-    --accent: 160 40% 42%;
-    --accent-foreground: 210 20% 96%;
+    --accent: 255 26% 26%;
+    --accent-foreground: 0 50% 99%;
 
-    --warning: 30 70% 50%;
-    --warning-foreground: 210 20% 98%;
+    --warning: 32 90% 52%;
+    --warning-foreground: 0 50% 99%;
 
     --destructive: 0 72% 50%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 0 50% 99%;
 
-    --border: 210 8% 22%;
-    --input: 210 8% 22%;
-    --ring: 185 45% 45%;
+    --border: 254 9% 78%;
+    --input: 254 9% 78%;
+    --ring: 255 45% 48%;
 
-    --success: 160 50% 42%;
-    --success-foreground: 210 20% 98%;
+    --success: 142 45% 40%;
+    --success-foreground: 0 50% 99%;
 
     --radius: 0.625rem;
 
-    --surface-elevated: 210 6% 17%;
+    --surface-elevated: 254 9% 96%;
 
-    --sidebar-background: 210 6% 10%;
-    --sidebar-foreground: 210 15% 78%;
-    --sidebar-primary: 185 45% 45%;
-    --sidebar-primary-foreground: 210 6% 10%;
-    --sidebar-accent: 210 8% 20%;
-    --sidebar-accent-foreground: 210 15% 78%;
-    --sidebar-border: 210 8% 18%;
-    --sidebar-ring: 185 45% 45%;
+    --sidebar-background: 255 26% 22%;
+    --sidebar-foreground: 0 50% 99%;
+    --sidebar-primary: 255 45% 48%;
+    --sidebar-primary-foreground: 0 50% 99%;
+    --sidebar-accent: 254 9% 78%;
+    --sidebar-accent-foreground: 255 26% 22%;
+    --sidebar-border: 255 26% 20%;
+    --sidebar-ring: 255 45% 48%;
+  }
+
+  .dark {
+    --background: 0 0% 0.4%;
+    --foreground: 0 50% 99%;
+
+    --card: 255 26% 18%;
+    --card-foreground: 0 50% 99%;
+
+    --popover: 255 26% 18%;
+    --popover-foreground: 0 50% 99%;
+
+    --primary: 255 45% 56%;
+    --primary-foreground: 0 0% 0.4%;
+
+    --secondary: 255 26% 26%;
+    --secondary-foreground: 0 50% 99%;
+
+    --muted: 255 18% 22%;
+    --muted-foreground: 254 9% 78%;
+
+    --accent: 254 9% 71%;
+    --accent-foreground: 0 0% 0.4%;
+
+    --warning: 32 90% 56%;
+    --warning-foreground: 0 0% 0.4%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 50% 99%;
+
+    --border: 255 18% 28%;
+    --input: 255 18% 28%;
+    --ring: 255 45% 56%;
+
+    --success: 142 50% 45%;
+    --success-foreground: 0 0% 0.4%;
+
+    --surface-elevated: 255 18% 20%;
+
+    --sidebar-background: 255 26% 12%;
+    --sidebar-foreground: 0 50% 99%;
+    --sidebar-primary: 255 45% 56%;
+    --sidebar-primary-foreground: 0 0% 0.4%;
+    --sidebar-accent: 255 26% 28%;
+    --sidebar-accent-foreground: 0 50% 99%;
+    --sidebar-border: 255 18% 22%;
+    --sidebar-ring: 255 45% 56%;
   }
 }
 
@@ -61,6 +108,24 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    margin: 0;
+    background-image: radial-gradient(circle at top, hsl(var(--primary) / 0.08), transparent 55%),
+      radial-gradient(circle at 20% 30%, hsl(var(--accent) / 0.05), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  #root {
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  a {
+    color: hsl(var(--primary));
+    text-underline-offset: 4px;
+  }
+
+  a:hover {
+    color: hsl(var(--accent));
   }
 }
 
@@ -73,13 +138,13 @@
   }
 
   .chat-bubble-user {
-    background: hsl(var(--primary) / 0.12);
-    border: 1px solid hsl(var(--primary) / 0.2);
+    background: hsl(var(--primary) / 0.14);
+    border: 1px solid hsl(var(--primary) / 0.25);
     @apply rounded-2xl rounded-br-sm px-4 py-2.5;
   }
 
   .chat-bubble-peer {
-    background: hsl(var(--secondary));
+    background: hsl(var(--surface-elevated));
     border: 1px solid hsl(var(--border));
     @apply rounded-2xl rounded-bl-sm px-4 py-2.5;
   }

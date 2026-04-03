@@ -1,5 +1,4 @@
 import { ReactNode } from "react";
-import { useLocation, Link } from "react-router-dom";
 import { useAlias } from "@/hooks/useAlias";
 import {
   Sidebar,
@@ -11,9 +10,11 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  SidebarInset,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
-import { LayoutDashboard, MessageCircle, BookOpen, LifeBuoy, Users, Shield } from "lucide-react";
+import { LayoutDashboard, MessageCircle, BookOpen, LifeBuoy, Users } from "lucide-react";
 
 const navItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -24,16 +25,11 @@ const navItems = [
 ];
 
 function AppSidebar() {
-  const location = useLocation();
-
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="pt-4">
-        <div className="px-4 pb-4 mb-2 border-b border-sidebar-border">
-          <Link to="/" className="flex items-center gap-2">
-            <Shield className="w-6 h-6 text-primary shrink-0" />
-            <span className="text-sm font-bold text-foreground tracking-tight">SafeSpace</span>
-          </Link>
+      <SidebarContent className="pt-4 gap-2">
+        <div className="px-4 pb-4 mb-2 border-b border-sidebar-border flex items-center justify-end">
+          <SidebarTrigger className="text-sidebar-foreground hover:bg-sidebar-accent" />
         </div>
         <SidebarGroup>
           <SidebarGroupContent>
@@ -44,8 +40,8 @@ function AppSidebar() {
                     <NavLink
                       to={item.url}
                       end={item.url === "/"}
-                      className="hover:bg-sidebar-accent/60"
-                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                      className="text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/70"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
                     >
                       <item.icon className="mr-2 h-4 w-4" />
                       <span>{item.title}</span>
@@ -65,30 +61,40 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const alias = useAlias();
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full">
         <AppSidebar />
-        <div className="flex-1 flex flex-col min-w-0">
+        <SidebarInset className="flex-1 flex flex-col min-w-0 transition-[padding] duration-300 ease-in-out md:pl-[--sidebar-width] peer-data-[state=collapsed]:md:pl-[--sidebar-width-icon]">
           {/* Header */}
-          <header className="h-14 flex items-center justify-between border-b border-border bg-card px-4 shrink-0">
-            <div className="flex items-center gap-3">
-              <SidebarTrigger />
-              <span className="text-sm text-muted-foreground">|</span>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-xs">
-                  🦅
-                </div>
-                <span className="text-sm font-semibold text-foreground">{alias}</span>
-              </div>
+          <AppHeader alias={alias} />
+          <main className="flex-1 overflow-y-auto">
+            <div className="mx-auto w-full max-w-6xl px-5 py-6 sm:px-6 lg:px-8">
+              {children}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              <span className="text-[11px] text-muted-foreground font-mono">ANONYMOUS SESSION</span>
-            </div>
-          </header>
-          <main className="flex-1 overflow-y-auto">{children}</main>
-        </div>
+          </main>
+        </SidebarInset>
       </div>
     </SidebarProvider>
+  );
+}
+
+function AppHeader({ alias }: { alias: string }) {
+  return (
+    <header className="h-16 flex items-center justify-between border-b border-border/70 bg-card/80 px-5 shrink-0 backdrop-blur">
+      <div className="flex items-center gap-3">
+        <SidebarTrigger className="h-8 w-8" />
+        <span className="text-sm text-muted-foreground">|</span>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center text-xs">
+            🦅
+          </div>
+          <span className="text-base font-semibold text-foreground">Sukun</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+        <span className="text-[11px] text-muted-foreground font-mono">ANONYMOUS SESSION</span>
+      </div>
+    </header>
   );
 }

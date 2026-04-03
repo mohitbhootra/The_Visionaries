@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# The Visionaries
 
 TODO: Document your project here

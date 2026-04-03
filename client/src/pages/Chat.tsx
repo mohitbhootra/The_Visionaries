@@ -54,74 +54,79 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-3.5rem)]">
-      {/* Status Bar */}
-      <div className="flex items-center justify-between px-4 py-2 bg-card border-b border-border">
-        <div className="flex items-center gap-3">
-          {/* Microscopic red burn icon */}
+    <div className="mx-auto flex w-full max-w-4xl flex-col">
+      <div className="flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        {/* Status Bar */}
+        <div className="flex items-center justify-between gap-4 px-5 py-2.5 border-b border-border bg-surface-elevated">
+          <div className="flex items-center gap-2.5">
+            <Flame className="w-3.5 h-3.5 text-destructive" />
+            <span className="text-[11px] font-mono text-destructive/80">TTL 24H: DATA BURNING INITIATED</span>
+          </div>
           <div className="flex items-center gap-1.5">
-            <Flame className="w-3 h-3 text-destructive" />
-            <span className="text-[10px] font-mono text-destructive/80">TTL 24H: DATA BURNING INITIATED</span>
+            {riskStatus === "OK" ? (
+              <ShieldCheck className="w-3.5 h-3.5 text-success" />
+            ) : (
+              <AlertTriangle className="w-3.5 h-3.5 text-warning animate-pulse" />
+            )}
+            <span className={`text-[11px] font-mono ${riskStatus === "OK" ? "text-success" : "text-warning"}`}>
+              Risk Scan: {riskStatus}
+            </span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          {riskStatus === "OK" ? (
-            <ShieldCheck className="w-3.5 h-3.5 text-success" />
-          ) : (
-            <AlertTriangle className="w-3.5 h-3.5 text-warning animate-pulse" />
-          )}
-          <span className={`text-[10px] font-mono ${riskStatus === "OK" ? "text-success" : "text-warning"}`}>
-            Risk Scan: {riskStatus}
-          </span>
-        </div>
-      </div>
 
-      {/* Peer Info */}
-      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center text-sm">
-            🦉
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-foreground">Silver Owl</p>
-            <div className="flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-success" />
-              <span className="text-[10px] text-muted-foreground">Trained Peer Supporter</span>
+        {/* Peer Info */}
+        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-primary/15 border border-primary/25 flex items-center justify-center text-sm">
+              🦉
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Silver Owl</p>
+              <div className="flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                <span className="text-[11px] text-muted-foreground">Trained Peer Supporter</span>
+              </div>
             </div>
           </div>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="h-8 text-[11px] font-semibold uppercase tracking-wider gap-1.5"
+          >
+            <Flame className="w-3 h-3" /> End & Burn
+          </Button>
         </div>
-        <Button variant="destructive" size="sm" className="h-7 text-[10px] font-bold uppercase tracking-wider gap-1.5">
-          <Flame className="w-3 h-3" /> End & Burn
-        </Button>
-      </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {messages.map((msg) => (
-          <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`${msg.sender === "user" ? "chat-bubble-user" : "chat-bubble-peer"} max-w-[320px]`}>
-              <p className="text-sm text-foreground leading-relaxed">{msg.text}</p>
-              <p className={`text-[10px] text-muted-foreground mt-1 ${msg.sender === "user" ? "text-right" : ""}`}>
-                {msg.time}
-              </p>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 bg-background">
+          {messages.map((msg) => (
+            <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`${msg.sender === "user" ? "chat-bubble-user" : "chat-bubble-peer"} max-w-[420px]`}
+              >
+                <p className="text-sm text-foreground leading-relaxed">{msg.text}</p>
+                <p className={`text-[10px] text-muted-foreground mt-1 ${msg.sender === "user" ? "text-right" : ""}`}>
+                  {msg.time}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      {/* Input */}
-      <div className="px-4 pb-4 pt-2 border-t border-border bg-card">
-        <div className="flex items-center gap-2 bg-secondary rounded-xl px-4 py-2.5 border border-border">
-          <input
-            className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
-            placeholder="Type anonymously..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-          />
-          <button onClick={sendMessage} className="text-primary hover:text-primary/80 transition-colors">
-            <Send className="w-4 h-4" />
-          </button>
+        {/* Input */}
+        <div className="px-5 pb-5 pt-3 border-t border-border bg-surface-elevated">
+          <div className="flex items-center gap-2 bg-background rounded-xl px-4 py-3 border border-border shadow-sm">
+            <input
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
+              placeholder="Type anonymously..."
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            />
+            <button onClick={sendMessage} className="text-primary hover:text-primary/80 transition-colors">
+              <Send className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
