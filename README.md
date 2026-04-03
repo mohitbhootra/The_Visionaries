@@ -19,6 +19,30 @@ npm run dev               # starts on http://localhost:5173
 Volunteer login: testpeer1 / password123
 (Run POST /api/volunteer/seed once to create this account)
 
+## Key Safety Routes (Person 2)
+
+### Volunteer Management
+- **POST /api/volunteer/login** - Volunteer authentication (username + password)
+- **POST /api/volunteer/seed** - Create test volunteer (prototype only)
+- **PATCH /api/volunteer/availability** - Toggle volunteer online/offline status
+- **POST /api/volunteer/match** - Request a peer match by tags
+
+### Trigger Word System
+The platform scans all incoming messages for crisis language:
+- **Emergency tier:** Immediate divert to emergency contacts (suicide ideation, self-harm language)
+- **Flagged tier:** Alert volunteer to monitor closely (depression, hopelessness, panic signals)
+- All safe messages proceed to chat normally
+
+### Authentication
+- JWT tokens passed as `Authorization: Bearer <token>` header
+- Tokens expire after 8 hours
+- All protected routes require valid token
+
+### Testing
+Run test files in `server/` folder:
+- `node test-scan.js` - Test trigger word detection
+- `node test-flow.js` - Test full message pipeline and matchmaking
+
 ## Team
 - Person 1: Backend core (Express, MongoDB, APIs)
 - Person 2: Auth + safety (JWT, trigger scanner, matchmaker)
