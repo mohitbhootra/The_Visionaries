@@ -7,13 +7,13 @@ Zero sign-ups. Zero PII. Data auto-deletes in 24 hours.
 ### 1. Backend
 cd server
 npm install
-cp ../.env.example .env   # fill in your MongoDB URI and JWT secret
-npm run dev               # starts on http://localhost:5000
+cp .env   
+npm run dev        
 
 ### 2. Frontend
 cd client
 npm install
-npm run dev               # starts on http://localhost:5173
+npm run dev              
 
 ## Test Accounts
 Volunteer login: testpeer1 / password123
