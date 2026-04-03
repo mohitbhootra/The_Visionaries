@@ -3,7 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Volunteer = require('../models/Volunteer');
 const verifyToken = require('../middleware/auth');
-const { findMatch } = require('../utils/matchmaker');
+const { findMatch } = require('../middleware/utils/matchmaker');
 
 // POST /api/volunteer/login
 // Volunteer logs in with username + password

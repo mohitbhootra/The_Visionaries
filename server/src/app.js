@@ -24,3 +24,9 @@ app.use('/api/chat', chatRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// with your other requires at the top
+const volunteerRoutes = require('./routes/volunteer');
+
+// with your other app.use lines
+app.use('/api/volunteer', volunteerRoutes);
