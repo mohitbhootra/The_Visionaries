@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Flame, Send, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getChatHistory, sendMessage as sendMessageApi, startSession } from "@/services/api";
 
 interface Message {
   id: number;
@@ -20,9 +21,48 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [riskStatus, setRiskStatus] = useState<"OK" | "REDIRECTING">("OK");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  const sendMessage = () => {
+  useEffect(() => {
+    let isActive = true;
+
+    const initSession = async () => {
+      try {
+        if (!localStorage.getItem("sessionId")) {
+          await startSession();
+        }
+        const history = await getChatHistory();
+        if (!isActive) return;
+        if (history?.messages?.length) {
+          const mapped: Message[] = history.messages.map((msg, index) => ({
+            id: msg.timestamp ? new Date(msg.timestamp).getTime() : index,
+            text: msg.text,
+            sender: msg.sender === "student" ? "user" : "peer",
+            time: msg.timestamp
+              ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+              : "",
+          }));
+          setMessages(mapped);
+        }
+      } catch (err) {
+        if (!isActive) return;
+        setError("Unable to connect to chat. Please try again.");
+      } finally {
+        if (isActive) setIsLoading(false);
+      }
+    };
+
+    initSession();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const sendMessage = async () => {
     if (!input.trim()) return;
+    setError("");
+
     const newMsg: Message = {
       id: Date.now(),
       text: input,
@@ -30,16 +70,19 @@ export default function Chat() {
       time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
     setMessages((prev) => [...prev, newMsg]);
-
-    // Simulate risk scan
-    const triggerWords = ["suicide", "kill myself", "end it all", "self-harm"];
-    if (triggerWords.some((w) => input.toLowerCase().includes(w))) {
-      setRiskStatus("REDIRECTING");
-    }
-
     setInput("");
 
-    // Simulate peer response
+    try {
+      const response = await sendMessageApi(newMsg.text);
+      if (response?.scanResult?.riskLevel === "emergency") {
+        setRiskStatus("REDIRECTING");
+      } else {
+        setRiskStatus("OK");
+      }
+    } catch (err) {
+      setError("Message failed to send. Please retry.");
+    }
+
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
@@ -71,6 +114,7 @@ export default function Chat() {
             <span className={`text-[11px] font-mono ${riskStatus === "OK" ? "text-success" : "text-warning"}`}>
               Risk Scan: {riskStatus}
             </span>
+            {isLoading ? <span className="text-[11px] text-muted-foreground">· Connecting...</span> : null}
           </div>
         </div>
 
@@ -99,6 +143,11 @@ export default function Chat() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4 bg-background">
+          {error ? (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+              {error}
+            </div>
+          ) : null}
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
               <div
