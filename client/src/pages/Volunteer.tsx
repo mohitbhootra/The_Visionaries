@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Lock, MessageSquare, BarChart3, User, Clock, TrendingUp } from "lucide-react";
+import { requestMatch, toggleAvailability, volunteerLogin } from "@/services/api";
 
 const pendingQueue = [
   { id: 1, alias: "Amber Fox", tags: ["Exam Anxiety", "Sleep Issues"], waitTime: "2m" },
@@ -22,6 +23,59 @@ const heatmapData = [
 export default function Volunteer() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [isAvailable, setIsAvailable] = useState(true);
+  const [username, setUsername] = useState("testpeer1");
+  const [password, setPassword] = useState("password123");
+  const [loginError, setLoginError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [matchTags, setMatchTags] = useState("Placements, Academics");
+  const [matchResult, setMatchResult] = useState<null | { found?: boolean; volunteerAlias?: string; message?: string; note?: string; matchedTags?: string[] }>(null);
+  const [isSavingAvailability, setIsSavingAvailability] = useState(false);
+  const [isMatching, setIsMatching] = useState(false);
+
+  const handleLogin = async () => {
+    setLoginError("");
+    setIsLoggingIn(true);
+
+    try {
+      await volunteerLogin(username.trim(), password);
+      setIsUnlocked(true);
+    } catch (err) {
+      setLoginError("Login failed. Check your volunteer credentials.");
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleAvailabilityChange = async (nextAvailable: boolean) => {
+    setIsAvailable(nextAvailable);
+    setIsSavingAvailability(true);
+
+    try {
+      await toggleAvailability(nextAvailable);
+    } catch {
+      setIsAvailable((prev) => !prev);
+    } finally {
+      setIsSavingAvailability(false);
+    }
+  };
+
+  const handleFindMatch = async () => {
+    setIsMatching(true);
+    setMatchResult(null);
+
+    try {
+      const tags = matchTags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+      const result = await requestMatch(tags);
+      setMatchResult(result);
+    } catch {
+      setMatchResult({ found: false, message: "Unable to contact the match service right now." });
+    } finally {
+      setIsMatching(false);
+    }
+  };
 
   if (!isUnlocked) {
     return (
@@ -37,17 +91,27 @@ export default function Volunteer() {
               </p>
             </div>
             <input
+              type="text"
+              className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground text-center"
+              placeholder="Volunteer username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <input
               type="password"
               className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground text-center"
-              placeholder="Access Code"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") setIsUnlocked(true);
+                if (e.key === "Enter") handleLogin();
               }}
             />
-            <Button className="w-full" onClick={() => setIsUnlocked(true)}>
-              Unlock Portal
+            {loginError ? <p className="text-xs text-destructive">{loginError}</p> : null}
+            <Button className="w-full" onClick={handleLogin} disabled={isLoggingIn}>
+              {isLoggingIn ? "Unlocking..." : "Unlock Portal"}
             </Button>
-            <p className="text-[10px] text-muted-foreground">Demo: any code works</p>
+            <p className="text-[10px] text-muted-foreground">Demo credentials: testpeer1 / password123</p>
           </CardContent>
         </Card>
       </div>
@@ -63,9 +127,9 @@ export default function Volunteer() {
         </div>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">Availability</span>
-          <Switch checked={isAvailable} onCheckedChange={setIsAvailable} />
+          <Switch checked={isAvailable} onCheckedChange={handleAvailabilityChange} />
           <Badge variant={isAvailable ? "default" : "secondary"} className="text-xs">
-            {isAvailable ? "Online" : "Offline"}
+            {isSavingAvailability ? "Saving..." : isAvailable ? "Online" : "Offline"}
           </Badge>
         </div>
       </div>
@@ -152,6 +216,39 @@ export default function Volunteer() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <User className="w-4 h-4 text-primary" />
+            Find a Match
+          </CardTitle>
+          <p className="text-[10px] text-muted-foreground">Request a backend match using comma-separated tags.</p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <input
+            className="w-full bg-secondary border border-border rounded-lg px-4 py-2.5 text-sm text-foreground"
+            value={matchTags}
+            onChange={(e) => setMatchTags(e.target.value)}
+            placeholder="Placements, Academics"
+          />
+          <Button onClick={handleFindMatch} disabled={isMatching}>
+            {isMatching ? "Matching..." : "Find Match"}
+          </Button>
+          {matchResult ? (
+            <div className="rounded-lg border border-border bg-secondary/40 p-4 text-sm space-y-1">
+              <p className="font-semibold text-foreground">
+                {matchResult.found ? `Matched with ${matchResult.volunteerAlias}` : "No match found"}
+              </p>
+              {matchResult.note ? <p className="text-xs text-muted-foreground">{matchResult.note}</p> : null}
+              {matchResult.message ? <p className="text-xs text-muted-foreground">{matchResult.message}</p> : null}
+              {matchResult.matchedTags?.length ? (
+                <p className="text-xs text-muted-foreground">Matched tags: {matchResult.matchedTags.join(", ")}</p>
+              ) : null}
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
     </div>
   );
 }

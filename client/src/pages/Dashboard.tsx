@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Wind, Brain, Users, Sparkles, Heart, BookOpen, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { startSession } from "@/services/api";
 
 const stressTags = [
   "Academic Stress", "Exam Anxiety", "Social Isolation", "Hostel Issues",
@@ -39,12 +40,30 @@ const quickTools = [
 
 export default function Dashboard() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isStarting, setIsStarting] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
+  };
+
+  const beginAnonymousChat = async () => {
+    if (selectedTags.length === 0 || isStarting) return;
+
+    setError("");
+    setIsStarting(true);
+
+    try {
+      await startSession(selectedTags);
+      navigate("/chat");
+    } catch {
+      setError("Unable to start a secure session right now. Please try again.");
+    } finally {
+      setIsStarting(false);
+    }
   };
 
   return (
@@ -96,6 +115,11 @@ export default function Dashboard() {
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
+            {error ? (
+              <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                {error}
+              </div>
+            ) : null}
             <div className="flex flex-wrap gap-2">
               {stressTags.map((tag) => (
                 <Badge
@@ -114,11 +138,11 @@ export default function Dashboard() {
             </div>
             <Button
               className="w-full"
-              disabled={selectedTags.length === 0}
-              onClick={() => navigate("/chat")}
+              disabled={selectedTags.length === 0 || isStarting}
+              onClick={beginAnonymousChat}
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Get Matched Anonymously
+              {isStarting ? "Starting Secure Session..." : "Get Matched Anonymously"}
             </Button>
           </CardContent>
         </Card>

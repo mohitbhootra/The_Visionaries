@@ -11,7 +11,10 @@ function generateAlias(): string {
 
 export function useAlias() {
   const [alias] = useState<string>(() => {
-    const stored = localStorage.getItem("safespace_alias");
+    const stored =
+      localStorage.getItem("anonymousSessionAlias") ||
+      localStorage.getItem("alias") ||
+      localStorage.getItem("safespace_alias");
     if (stored) return stored;
     const newAlias = generateAlias();
     localStorage.setItem("safespace_alias", newAlias);

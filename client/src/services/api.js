@@ -1,9 +1,14 @@
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const ANONYMOUS_SESSION_TOKEN_KEY = 'anonymousSessionToken';
+const ANONYMOUS_SESSION_ALIAS_KEY = 'anonymousSessionAlias';
+const VOLUNTEER_TOKEN_KEY = 'volunteerToken';
 
-// Helper: get token from localStorage
-const getToken = () => localStorage.getItem('sessionToken');
+const getToken = () =>
+  localStorage.getItem(VOLUNTEER_TOKEN_KEY) ||
+  localStorage.getItem(ANONYMOUS_SESSION_TOKEN_KEY) ||
+  localStorage.getItem('sessionToken');
 
 // Axios instance with default headers
 const api = axios.create({ baseURL: BASE_URL });
@@ -18,10 +23,12 @@ api.interceptors.request.use((config) => {
 // ── Session ──────────────────────────────────────────
 export const startSession = async (tags = []) => {
   const res = await api.post('/session/start', { tags });
-  // Save token to localStorage
+  localStorage.setItem(ANONYMOUS_SESSION_TOKEN_KEY, res.data.token);
   localStorage.setItem('sessionToken', res.data.token);
   localStorage.setItem('sessionId', res.data.sessionId);
   localStorage.setItem('alias', res.data.alias);
+  localStorage.setItem(ANONYMOUS_SESSION_ALIAS_KEY, res.data.alias);
+  localStorage.setItem('sessionTags', JSON.stringify(tags));
   return res.data;
 };
 
@@ -52,8 +59,31 @@ export const getEmergencyContacts = async () => {
 // ── Volunteer ────────────────────────────────────────
 export const volunteerLogin = async (username, password) => {
   const res = await api.post('/volunteer/login', { username, password });
-  localStorage.setItem('sessionToken', res.data.token);
+  localStorage.setItem(VOLUNTEER_TOKEN_KEY, res.data.token);
   return res.data;
+};
+
+export const clearAnonymousSession = () => {
+  localStorage.removeItem(ANONYMOUS_SESSION_TOKEN_KEY);
+  localStorage.removeItem('sessionToken');
+  localStorage.removeItem('sessionId');
+  localStorage.removeItem('alias');
+  localStorage.removeItem(ANONYMOUS_SESSION_ALIAS_KEY);
+  localStorage.removeItem('sessionTags');
+};
+
+export const getAnonymousSessionAlias = () =>
+  localStorage.getItem(ANONYMOUS_SESSION_ALIAS_KEY) ||
+  localStorage.getItem('alias') ||
+  localStorage.getItem('safespace_alias') ||
+  '';
+
+export const getAnonymousSessionTags = () => {
+  try {
+    return JSON.parse(localStorage.getItem('sessionTags') || '[]');
+  } catch {
+    return [];
+  }
 };
 
 export const requestMatch = async (tags) => {

@@ -1,51 +1,56 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Phone, Building2, HeartHandshake, ShieldAlert, ExternalLink } from "lucide-react";
-
-const contacts = [
-  {
-    icon: ShieldAlert,
-    title: "Campus Police",
-    number: "100 / Campus Extension: 1234",
-    desc: "For immediate physical safety concerns on campus.",
-    color: "text-destructive",
-    bg: "bg-destructive/10",
-  },
-  {
-    icon: Building2,
-    title: "Counseling Center",
-    number: "+91 98765 43210",
-    desc: "Professional on-campus counseling. Confidential appointments available.",
-    color: "text-primary",
-    bg: "bg-primary/10",
-  },
-  {
-    icon: Phone,
-    title: "iCall Helpline",
-    number: "9152987821",
-    desc: "Professional, free, and confidential psychosocial helpline (Mon–Sat, 8am–10pm).",
-    color: "text-accent",
-    bg: "bg-accent/10",
-  },
-  {
-    icon: Phone,
-    title: "Vandrevala Foundation",
-    number: "1860-2662-345",
-    desc: "24/7 mental health helpline. Multilingual support available.",
-    color: "text-accent",
-    bg: "bg-accent/10",
-  },
-  {
-    icon: Phone,
-    title: "AASRA",
-    number: "91-22-27546669",
-    desc: "Crisis intervention and suicide prevention. 24/7 availability.",
-    color: "text-warning",
-    bg: "bg-warning/10",
-  },
-];
+import { getEmergencyContacts } from "@/services/api";
 
 export default function Support() {
+  const [contacts, setContacts] = useState<
+    { icon: typeof Phone; title: string; number: string; desc: string; color: string; bg: string }[]
+  >([]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadContacts = async () => {
+      try {
+        const response = await getEmergencyContacts();
+        if (!isMounted) return;
+
+        const mapped = (response.contacts || []).map((contact: { name: string; phone: string; available?: string }) => ({
+          icon: Phone,
+          title: contact.name,
+          number: contact.phone,
+          desc: contact.available
+            ? `Available ${contact.available}`
+            : "Verified support contact from the backend.",
+          color: "text-accent",
+          bg: "bg-accent/10",
+        }));
+
+        setContacts(mapped);
+      } catch {
+        if (!isMounted) return;
+        setContacts([
+          {
+            icon: ShieldAlert,
+            title: "Campus Police",
+            number: "100 / Campus Extension: 1234",
+            desc: "For immediate physical safety concerns on campus.",
+            color: "text-destructive",
+            bg: "bg-destructive/10",
+          },
+        ]);
+      }
+    };
+
+    loadContacts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <div>

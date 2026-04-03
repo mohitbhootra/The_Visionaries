@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Flame, Send, ShieldCheck, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getChatHistory, sendMessage as sendMessageApi, startSession } from "@/services/api";
+import {
+  getChatHistory,
+  sendMessage as sendMessageApi,
+  startSession,
+  getAnonymousSessionTags,
+} from "@/services/api";
 
 interface Message {
   id: number;
@@ -10,19 +15,19 @@ interface Message {
   time: string;
 }
 
-const initialMessages: Message[] = [
-  { id: 1, text: "Hey, I've been feeling really overwhelmed with semester exams coming up...", sender: "user", time: "9:42 PM" },
-  { id: 2, text: "I hear you. That pressure is real. Want to talk about what's weighing on you most?", sender: "peer", time: "9:43 PM" },
-  { id: 3, text: "It's just... I haven't slept properly in days and I feel so alone in this.", sender: "user", time: "9:44 PM" },
-  { id: 4, text: "Sleep deprivation makes everything feel harder. You're not alone — a lot of students go through this. Have you tried any relaxation techniques before bed?", sender: "peer", time: "9:45 PM" },
-];
+interface EmergencyContact {
+  name: string;
+  phone: string;
+}
 
 export default function Chat() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [riskStatus, setRiskStatus] = useState<"OK" | "REDIRECTING">("OK");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [emergencyContacts, setEmergencyContacts] = useState<EmergencyContact[]>([]);
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -30,21 +35,24 @@ export default function Chat() {
     const initSession = async () => {
       try {
         if (!localStorage.getItem("sessionId")) {
-          await startSession();
+          await startSession(getAnonymousSessionTags());
         }
         const history = await getChatHistory();
         if (!isActive) return;
-        if (history?.messages?.length) {
-          const mapped: Message[] = history.messages.map((msg, index) => ({
+        if (history?.alias) {
+          localStorage.setItem("alias", history.alias);
+        }
+        const mapped: Message[] = Array.isArray(history?.messages)
+          ? history.messages.map((msg: { sender: string; text: string; timestamp?: string }, index: number) => ({
             id: msg.timestamp ? new Date(msg.timestamp).getTime() : index,
             text: msg.text,
             sender: msg.sender === "student" ? "user" : "peer",
             time: msg.timestamp
               ? new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
               : "",
-          }));
-          setMessages(mapped);
-        }
+          }))
+          : [];
+        setMessages(mapped);
       } catch (err) {
         if (!isActive) return;
         setError("Unable to connect to chat. Please try again.");
@@ -60,8 +68,9 @@ export default function Chat() {
   }, []);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || isSending) return;
     setError("");
+    setIsSending(true);
 
     const newMsg: Message = {
       id: Date.now(),
@@ -76,24 +85,17 @@ export default function Chat() {
       const response = await sendMessageApi(newMsg.text);
       if (response?.scanResult?.riskLevel === "emergency") {
         setRiskStatus("REDIRECTING");
+        setEmergencyContacts(response.emergencyContacts || []);
       } else {
         setRiskStatus("OK");
+        setEmergencyContacts([]);
       }
     } catch (err) {
       setError("Message failed to send. Please retry.");
+      setMessages((prev) => prev.filter((msg) => msg.id !== newMsg.id));
+    } finally {
+      setIsSending(false);
     }
-
-    setTimeout(() => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          text: "Thank you for sharing that. I'm here to listen — take your time.",
-          sender: "peer",
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        },
-      ]);
-    }, 1500);
   };
 
   return (
@@ -115,6 +117,7 @@ export default function Chat() {
               Risk Scan: {riskStatus}
             </span>
             {isLoading ? <span className="text-[11px] text-muted-foreground">· Connecting...</span> : null}
+            {isSending ? <span className="text-[11px] text-muted-foreground">· Sending...</span> : null}
           </div>
         </div>
 
@@ -125,7 +128,7 @@ export default function Chat() {
               🦉
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Silver Owl</p>
+              <p className="text-sm font-semibold text-foreground">Anonymous Peer Support</p>
               <div className="flex items-center gap-1">
                 <div className="w-1.5 h-1.5 rounded-full bg-success" />
                 <span className="text-[11px] text-muted-foreground">Trained Peer Supporter</span>
@@ -148,6 +151,11 @@ export default function Chat() {
               {error}
             </div>
           ) : null}
+          {!isLoading && messages.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border bg-secondary/30 px-4 py-8 text-center text-sm text-muted-foreground">
+              Your secure chat is ready. Start by sharing what’s on your mind.
+            </div>
+          ) : null}
           {messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
               <div
@@ -162,6 +170,22 @@ export default function Chat() {
           ))}
         </div>
 
+        {riskStatus === "REDIRECTING" && emergencyContacts.length > 0 ? (
+          <div className="px-5 pb-3">
+            <div className="rounded-xl border border-warning/30 bg-warning/10 p-4 space-y-2">
+              <p className="text-sm font-semibold text-warning">Emergency support available now</p>
+              <div className="space-y-1 text-xs text-foreground">
+                {emergencyContacts.map((contact) => (
+                  <div key={contact.phone} className="flex items-center justify-between gap-3">
+                    <span>{contact.name}</span>
+                    <span className="font-mono text-primary">{contact.phone}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {/* Input */}
         <div className="px-5 pb-5 pt-3 border-t border-border bg-surface-elevated">
           <div className="flex items-center gap-2 bg-background rounded-xl px-4 py-3 border border-border shadow-sm">
@@ -172,7 +196,11 @@ export default function Chat() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
-            <button onClick={sendMessage} className="text-primary hover:text-primary/80 transition-colors">
+            <button
+              onClick={sendMessage}
+              className="text-primary hover:text-primary/80 transition-colors disabled:opacity-50"
+              disabled={isSending}
+            >
               <Send className="w-4 h-4" />
             </button>
           </div>
